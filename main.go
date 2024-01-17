@@ -59,7 +59,7 @@ func (m gameModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch keypress := msg.String(); keypress {
 		case "ctrl+c":
 			return m, tea.Quit
-		case "enter", "1", "2", "3", "4", "5":
+		case "enter":
 			if m.state == thinkingState {
 				return m, nil
 			}
