@@ -152,7 +152,7 @@ func updateGame(state gameState, model gameModel) func() tea.Msg {
 			}
 
 			if model.session.IsAnswered() {
-				update.list.Title = fmt.Sprintf("You're thinking of: %s", model.session.Answer().Name)
+				update.list.Title = fmt.Sprintf("You're thinking of: %s (%s)", model.session.Answer().Name, model.session.Answer().PhotoUrl)
 				update.list.SetWidth(len(update.list.Title) + 14)
 				update.list.SetItems([]list.Item{item("Yes"), item("No")})
 				update.state = answerPromptState
