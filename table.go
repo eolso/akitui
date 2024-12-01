@@ -1,8 +1,6 @@
 package main
 
 import (
-	"fmt"
-
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/table"
@@ -20,51 +18,51 @@ type tableView struct {
 	help  help.Model
 }
 
-func newTableView(game gameModel) tableView {
-	guesses, err := game.game.ListGuesses()
-	if err != nil {
-		panic(err)
-	}
-
-	var longest int
-	var rows []table.Row
-	for _, guess := range guesses {
-		rows = append(rows, table.Row{guess.Name(), fmt.Sprintf("%.2f%%", guess.Probability())})
-		if len(guess.Name()) > longest {
-			longest = len(guess.Name())
-		}
-	}
-
-	columns := []table.Column{
-		{Title: "Name", Width: longest},
-		{Title: "Certainty", Width: 10},
-	}
-
-	t := table.New(
-		table.WithColumns(columns),
-		table.WithRows(rows),
-		table.WithFocused(true),
-		table.WithHeight(7),
-	)
-
-	s := table.DefaultStyles()
-	s.Header = s.Header.
-		BorderStyle(lipgloss.NormalBorder()).
-		BorderForeground(lipgloss.Color("240")).
-		BorderBottom(true).
-		Bold(false)
-	s.Selected = s.Selected.
-		Foreground(lipgloss.Color("229")).
-		Background(lipgloss.Color("57")).
-		Bold(false)
-	t.SetStyles(s)
-
-	return tableView{
-		table: t,
-		game:  game,
-		help:  help.New(),
-	}
-}
+//func newTableView(game gameModel) tableView {
+//	guesses, err := game.session.ListGuesses()
+//	if err != nil {
+//		panic(err)
+//	}
+//
+//	var longest int
+//	var rows []table.Row
+//	for _, guess := range guesses {
+//		rows = append(rows, table.Row{guess.Name(), fmt.Sprintf("%.2f%%", guess.Probability())})
+//		if len(guess.Name()) > longest {
+//			longest = len(guess.Name())
+//		}
+//	}
+//
+//	columns := []table.Column{
+//		{Title: "Name", Width: longest},
+//		{Title: "Certainty", Width: 10},
+//	}
+//
+//	t := table.New(
+//		table.WithColumns(columns),
+//		table.WithRows(rows),
+//		table.WithFocused(true),
+//		table.WithHeight(7),
+//	)
+//
+//	s := table.DefaultStyles()
+//	s.Header = s.Header.
+//		BorderStyle(lipgloss.NormalBorder()).
+//		BorderForeground(lipgloss.Color("240")).
+//		BorderBottom(true).
+//		Bold(false)
+//	s.Selected = s.Selected.
+//		Foreground(lipgloss.Color("229")).
+//		Background(lipgloss.Color("57")).
+//		Bold(false)
+//	t.SetStyles(s)
+//
+//	return tableView{
+//		table: t,
+//		game:  game,
+//		help:  help.New(),
+//	}
+//}
 
 func (m tableView) Init() tea.Cmd { return nil }
 
@@ -93,7 +91,7 @@ func (m tableView) ShortHelp() []key.Binding {
 	return []key.Binding{
 		key.NewBinding(
 			key.WithKeys("g"),
-			key.WithHelp("g", "return to game"),
+			key.WithHelp("g", "return to session"),
 		),
 		key.NewBinding(
 			key.WithKeys("q"),

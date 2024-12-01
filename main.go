@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strconv"
 
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
@@ -24,7 +25,7 @@ const (
 )
 
 type gameUpdate struct {
-	game         akiapi.Game
+	session      akiapi.SessionManager
 	list         list.Model
 	state        gameState
 	answerBuffer int
@@ -74,7 +75,7 @@ func (m gameModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			return m, tea.Batch(cmd, m.list.StartSpinner(), update)
 		case "u":
-			if len(m.game.Responses()) > 0 {
+			if len(m.session.History()) > 0 {
 				update := updateGame(undoState, m)
 				m.state = thinkingState
 
@@ -84,12 +85,12 @@ func (m gameModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 				return m, tea.Batch(cmd, m.list.StartSpinner(), update)
 			}
-		case "g":
-			if m.state == thinkingState {
-				return m, nil
-			}
-
-			return newTableView(m), nil
+			//case "g":
+			//	if m.state == thinkingState {
+			//		return m, nil
+			//	}
+			//
+			//	return newTableView(m), nil
 		}
 
 	}
@@ -141,23 +142,17 @@ func main() {
 
 func updateGame(state gameState, model gameModel) func() tea.Msg {
 	return func() tea.Msg {
-		update := gameUpdate{game: model.game, list: model.list, answerBuffer: model.answerBuffer}
+		update := gameUpdate{session: model.session, list: model.list, answerBuffer: model.answerBuffer}
 
 		switch state {
 		case questionPromptState, initializingState:
-			update.err = model.game.SelectOption(update.list.Cursor())
+			update.err = model.session.Respond(akiapi.Response(strconv.Itoa(update.list.Cursor())))
 			if update.err != nil {
 				return update
 			}
 
-			if update.game.Progress() > 80.0 && update.answerBuffer <= 0 {
-				guess, err := update.game.Guess()
-				if err != nil {
-					update.err = err
-					return update
-				}
-
-				update.list.Title = fmt.Sprintf("You're thinking of: %s", guess.Name())
+			if model.session.IsAnswered() {
+				update.list.Title = fmt.Sprintf("You're thinking of: %s", model.session.Answer().Name)
 				update.list.SetWidth(len(update.list.Title) + 14)
 				update.list.SetItems([]list.Item{item("Yes"), item("No")})
 				update.state = answerPromptState
@@ -167,20 +162,17 @@ func updateGame(state gameState, model gameModel) func() tea.Msg {
 
 			update.answerBuffer--
 		case undoState:
-			update.err = update.game.Undo()
-			if update.answerBuffer == 5 {
-				update.answerBuffer = -1
-			}
+			update.err = update.session.UndoResponse()
 		case answerPromptState:
 			if update.list.Cursor() == 0 {
+				update.err = model.session.AcceptAnswer()
 				return tea.Quit()
 			} else {
-				update.err = update.game.Undo()
-				update.answerBuffer = 5
+				update.err = update.session.DeclineAnswer()
 			}
 		}
 
-		update.list.Title = fmt.Sprintf("%d) %s", len(update.game.Responses())+1, update.game.Question())
+		update.list.Title = fmt.Sprintf("%d) %s", len(update.session.History())+1, update.session.Question())
 		update.list.SetWidth(len(update.list.Title) + 14)
 		update.list.SetItems([]list.Item{
 			item("Yes"),

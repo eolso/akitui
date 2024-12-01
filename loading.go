@@ -1,10 +1,7 @@
 package main
 
 import (
-	"crypto/tls"
 	"fmt"
-	"net/http"
-
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
@@ -44,8 +41,9 @@ func newLoadingModel() loadingModel {
 
 func (l loadingModel) Init() tea.Cmd {
 	initClient := func() tea.Msg {
-		akiapi.SetHttpClient(&http.Client{Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}})
-		game, err := akiapi.NewGame(akiapi.GameOptions{Theme: akiapi.CharactersTheme, Language: akiapi.English})
+		session := akiapi.NewClient()
+		err := session.NewGame(akiapi.ThemeCharacters, false)
+		//game, err := akiapi.NewGame(akiapi.GameOptions{Theme: akiapi.CharactersTheme, Language: akiapi.English})
 		if err != nil {
 			panic(err)
 		}
@@ -59,8 +57,8 @@ func (l loadingModel) Init() tea.Cmd {
 		}
 
 		l := list.New(items, newGameList(), 30, 10)
-		l.Title = fmt.Sprintf("%d) %s", len(game.Responses())+1, game.Question())
-		l.SetWidth(len(game.Question()) + 14)
+		l.Title = fmt.Sprintf("%d) %s", len(session.History())+1, session.Question())
+		l.SetWidth(len(session.Question()) + 14)
 		l.SetShowStatusBar(false)
 		l.SetFilteringEnabled(false)
 		l.Styles.Title = titleStyle
@@ -69,8 +67,8 @@ func (l loadingModel) Init() tea.Cmd {
 		l.SetShowHelp(false)
 
 		return gameUpdate{
-			game: game,
-			list: l,
+			session: session,
+			list:    l,
 		}
 	}
 
@@ -103,7 +101,7 @@ func (l loadingModel) View() string {
 		return l.err.Error()
 	}
 
-	str := fmt.Sprintf("\n  %s Loading game...\n\n", l.spinner.View())
+	str := fmt.Sprintf("\n  %s Loading session...\n\n", l.spinner.View())
 	str += l.help.View(keyMap{
 		Quit: key.NewBinding(
 			key.WithKeys("q", "esc", "ctrl+c"),
